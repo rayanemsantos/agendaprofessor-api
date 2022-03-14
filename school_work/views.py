@@ -3,8 +3,8 @@ from django.http import Http404
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import SchoolWork, SchoolWorkDeliveryManage
-from .serializers import SchoolWorkSerializer, SchoolWorkDeliveryManageSerializer
+from .models import SchoolWork, SchoolWorkManage
+from .serializers import SchoolWorkSerializer, SchoolWorkManageSerializer
 
 from student.models import Student
 
@@ -45,21 +45,21 @@ class SchoolWorkViewSet(viewsets.ModelViewSet):
                 subjects = list()
                 for item in student:
                     student = Student.objects.get(pk=item) 
-                    subject, _ = SchoolWorkDeliveryManage.objects.get_or_create(
+                    subject, _ = SchoolWorkManage.objects.get_or_create(
                         school_work=school_work,
                         student=student,
                         delivered=True,
                     ) 
                     subjects.append(subject)           
-                serializer_subject = SchoolWorkDeliveryManageSerializer(subjects, many=True)   
+                serializer_subject = SchoolWorkManageSerializer(subjects, many=True)   
             else:     
                 student = Student.objects.get(pk=student)          
-                subject, _ = SchoolWorkDeliveryManage.objects.get_or_create(
+                subject, _ = SchoolWorkManage.objects.get_or_create(
                     school_work=school_work,
                     student=student,
                     delivered=True,
                 )
-                serializer_subject = SchoolWorkDeliveryManageSerializer(subject)
+                serializer_subject = SchoolWorkManageSerializer(subject)
             return Response(serializer_subject.data, status=status.HTTP_200_OK)   
         except Exception as e:
             print(e)

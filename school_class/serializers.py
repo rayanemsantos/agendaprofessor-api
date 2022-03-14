@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SchoolClass, SchoolClassSubject, SchoolClassStudent, SchoolClassSubjectHistory
+from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory
 from student.serializers import StudentSerializer
 
 class SchoolClassSerializer(serializers.ModelSerializer):
@@ -9,9 +9,9 @@ class SchoolClassSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class SchoolClassStudentSerializer(serializers.ModelSerializer):
+class StudentSubjectSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SchoolClassStudent
+        model = StudentSubject
         fields = '__all__'
 
     def to_representation(self, instance):
@@ -19,17 +19,17 @@ class SchoolClassStudentSerializer(serializers.ModelSerializer):
         response['student'] = '' if instance.student == "" or instance.student == None else StudentSerializer(instance.student).data
         return response
 
-class SchoolClassSubjectSerializer(serializers.ModelSerializer):
-    school_class_students = SchoolClassStudentSerializer(source="schoolclassstudent_set", many=True, read_only=True)
+class ClassSubjectSerializer(serializers.ModelSerializer):
+    students_subject = StudentSubjectSerializer(source="studentsubject_set", many=True, read_only=True)
 
     class Meta:
-        model = SchoolClassSubject
+        model = ClassSubject
         fields = '__all__'
 
-class SchoolClassSubjectHistorySerializer(serializers.ModelSerializer):
+class ClassSubjectHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = SchoolClassSubjectHistory
+        model = ClassSubjectHistory
         fields = '__all__'
 
 

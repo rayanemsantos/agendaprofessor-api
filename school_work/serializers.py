@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SchoolWork, SchoolWorkDeliveryManage
+from .models import SchoolWork, SchoolWorkManage
 
 class SchoolWorkSerializer(serializers.ModelSerializer):
 
@@ -7,10 +7,10 @@ class SchoolWorkSerializer(serializers.ModelSerializer):
         model = SchoolWork
         fields = '__all__'
 
-class SchoolWorkDeliveryManageSerializer(serializers.ModelSerializer):
+class SchoolWorkManageSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = SchoolWorkDeliveryManage
+        model = SchoolWorkManage
         fields = '__all__'
 
 

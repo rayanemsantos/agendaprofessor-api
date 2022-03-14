@@ -4,7 +4,6 @@ from django.utils import timezone
 
 from teacher.models import Teacher
 from student.models import Student
-from school_work.models import SchoolWork
 
 SHIFT_CHOICES = [
     ("MANHÃ", "MANHÃ"),
@@ -31,9 +30,29 @@ SUBJECT_CHOICES = [
     ("Redação", "Redação"),
 ]
 
-class SchoolClass(models.Model):
+GRADE_PERIOD_CHOICES = [
+    ("Bimestral", "Bimestral"),
+    ("Trimestral", "Trimestral"),
+    ("Semestral", "Semestral"),
+    ("Anual", "Anual"),
+]
 
-    serie = models.CharField(_("matrícula"), max_length=255, null=True, blank=True) 
+WEEKS_CHOICES = [
+    ("Segunda-feira", "Segunda-feira"),
+    ("Terça-feira", "Terça-feira"),
+    ("Quarta-feira", "Quarta-feira"),
+    ("Quinta-feira", "Quinta-feira"),
+    ("Sexta-feira", "Sexta-feira"),
+    ("Sábado-feira", "Sábado-feira"),
+    ("Domingo-feira", "Domingo-feira"),
+]
+
+class SchoolClass(models.Model):
+    '''
+    Classe que representa uma turma
+    '''
+    serie = models.CharField(_("série"), max_length=255, null=True, blank=True) 
+    identification = models.CharField(_("identificação"), max_length=255, null=True, blank=True) 
     shift = models.CharField(_("turno"), max_length=255, choices=SHIFT_CHOICES)    
     ano = models.PositiveIntegerField(_("ano"), null=True, blank=True )    
     creation_datetime = models.DateTimeField(editable=False)
@@ -49,10 +68,12 @@ class SchoolClass(models.Model):
         return super(SchoolClass, self).save(*args, **kwargs)
 
 
-class SchoolClassSubject(models.Model):
-
+class ClassSubject(models.Model):
+    '''
+    Classe que representa uma matéria de uma turma
+    '''
     school_class = models.ForeignKey(SchoolClass, verbose_name=_("turma"),
-                                     on_delete=models.CASCADE, null=True, blank=True)        
+                                      on_delete=models.CASCADE, null=True, blank=True)        
     teacher = models.ForeignKey(Teacher, verbose_name=_("professor"),
                                  on_delete=models.CASCADE, null=True, blank=True)    
     subject = models.CharField(_("materia"), max_length=255, choices=SUBJECT_CHOICES)                                            
@@ -63,14 +84,17 @@ class SchoolClassSubject(models.Model):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
-        return super(SchoolClassSubject, self).save(*args, **kwargs)
+        return super(ClassSubject, self).save(*args, **kwargs)
 
-class SchoolClassStudent(models.Model):
-
-    school_class_subject = models.ForeignKey(SchoolClassSubject, verbose_name=_("turma"),
-                                     on_delete=models.CASCADE, null=True, blank=True)        
-    student = models.ForeignKey(Student, verbose_name=_("aluno"),
-                                 on_delete=models.CASCADE, null=True, blank=True)                                              
+class ClassSubjectSchedule(models.Model):
+    '''
+    Classe que representa a frequência de aula de uma máteria
+    '''
+    class_subject = models.ForeignKey(ClassSubject, verbose_name=_("matéria da turma"),
+                                      on_delete=models.CASCADE, null=True, blank=True)
+    day_week = models.CharField(_("dia da semana"), max_length=255, choices=WEEKS_CHOICES)
+    hour_init = models.TimeField(_("hora início"), null=True, blank=True)
+    hour_end = models.TimeField(_("hora fim"), null=True, blank=True)                                        
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
 
@@ -78,19 +102,16 @@ class SchoolClassStudent(models.Model):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
-        return super(SchoolClassStudent, self).save(*args, **kwargs)
+        return super(ClassSubjectSchedule, self).save(*args, **kwargs)
 
-
-class SchoolClassSubjectHistory(models.Model):
-
+class ClassSubjectHistory(models.Model):
+    '''
+    Classe que representa o registro de aula de uma matéria
+    '''
     content = models.CharField(_("conteúdo"), max_length=255, null=True, blank=True) 
     comment = models.TextField(_("comentário") ,null=True, blank=True) 
-    school_class_subject = models.ForeignKey(SchoolClassSubject, verbose_name=_("turma"),
-                                             on_delete=models.CASCADE, null=True, blank=True)        
-    homework = models.ForeignKey(SchoolWork, related_name='homework', verbose_name=_("trabalho de casa"),
-                                 on_delete=models.CASCADE, null=True, blank=True)    
-    classwork = models.ForeignKey(SchoolWork, related_name='classwork', verbose_name=_("trabalho de classe"),
-                                 on_delete=models.CASCADE, null=True, blank=True)                                                                               
+    class_subject = models.ForeignKey(ClassSubject, verbose_name=_("matéria da turma"),
+                                      on_delete=models.CASCADE, null=True, blank=True)                                                                                                                   
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
 
@@ -98,12 +119,14 @@ class SchoolClassSubjectHistory(models.Model):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
-        return super(SchoolClassSubjectHistory, self).save(*args, **kwargs)
+        return super(ClassSubjectHistory, self).save(*args, **kwargs)
 
 
-class AttendanceManage(models.Model):
-
-    school_class_subject = models.ForeignKey(SchoolClassSubject, verbose_name=_("turma"),
+class ClassSubjectHistoryPresence(models.Model):
+    '''
+    Classe que representa o controle de presença de uma aula
+    '''
+    class_subject_history = models.ForeignKey(ClassSubjectHistory, verbose_name=_("aula"),
                                              on_delete=models.CASCADE, null=True, blank=True)    
     student = models.ForeignKey(Student, verbose_name=_("aluno"),
                                 on_delete=models.CASCADE, null=True, blank=True)     
@@ -115,4 +138,40 @@ class AttendanceManage(models.Model):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
-        return super(AttendanceManage, self).save(*args, **kwargs)
+        return super(ClassSubjectHistoryPresence, self).save(*args, **kwargs)
+        
+
+class StudentSubject(models.Model):
+    '''
+    Classe que representa uma matéria de um aluno
+    '''
+    class_subject = models.ForeignKey(ClassSubject, verbose_name=_("matéria turma"),
+                                     on_delete=models.CASCADE, null=True, blank=True)        
+    student = models.ForeignKey(Student, verbose_name=_("aluno"),
+                                 on_delete=models.CASCADE, null=True, blank=True)                                              
+    creation_datetime = models.DateTimeField(editable=False)
+    edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.creation_datetime:
+            self.creation_datetime = timezone.now()
+        self.edition_datetime = timezone.now()
+        return super(StudentSubject, self).save(*args, **kwargs)
+
+
+class StudentSubjectAverageGrade(models.Model):
+    '''
+    Classe que representa as médias de uma determinada matéria de um aluno
+    '''
+    student_subject = models.ForeignKey(StudentSubject, verbose_name=_("matéria do aluno"),
+                                      on_delete=models.CASCADE, null=True, blank=True),
+    average_grade = models.DecimalField(_("nota média"), max_digits=10, decimal_places=1)
+    period = models.CharField(_("período"), max_length=255, choices=GRADE_PERIOD_CHOICES)         
+    creation_datetime = models.DateTimeField(editable=False)
+    edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.creation_datetime:
+            self.creation_datetime = timezone.now()
+        self.edition_datetime = timezone.now()
+        return super(StudentSubjectAverageGrade, self).save(*args, **kwargs)
