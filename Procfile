@@ -1,1 +1,1 @@
-gunicorn agenda_professor_api.wsgi
+web: gunicorn agenda_professor_api.wsgi
