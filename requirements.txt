@@ -11,3 +11,4 @@ sqlparse==0.4.2
 requests
 django_extensions
 django-cors-headers
+psycopg2
