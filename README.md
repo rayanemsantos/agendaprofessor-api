@@ -1,5 +1,3 @@
-# girafales-api
-
 # how to run 
 
 1. Crie a ative um environment python 3 
