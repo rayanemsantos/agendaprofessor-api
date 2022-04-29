@@ -25,17 +25,22 @@ class TeacherRegistrationViewSet(viewsets.ModelViewSet):
             user.save()
         except Exception as e:
             print(e)
-            user = None
+            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         if user:
-            request.data['user'] = user.pk
-            serializer = self.get_serializer(data=request.data)
-            if serializer.is_valid():
-                try:
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
-                except Exception as e:
-                    return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                request.data['user'] = user.pk
+                serializer = self.get_serializer(data=request.data)
+                if serializer.is_valid():
+                    try:
+                        serializer.save()
+                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    except Exception as e:
+                        return Response(e.__str__(), status=status.HTTP_400_BAD_REQUEST)
+                user.delete()                        
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                user.delete()
+                return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'errors':{'user':'required'}}, status=status.HTTP_400_BAD_REQUEST)
 
 class TeacherAuthenticationViewSet(viewsets.ModelViewSet):

@@ -17,18 +17,10 @@ class Student(models.Model):
     edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return '' if not self.full_name else self.full_name
 
     def save(self, *args, **kwargs):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
         return super(Student, self).save(*args, **kwargs)
-
-    # def set_address(self):
-    #     response = requests.get('http://viacep.com.br/ws/{}/json/'.format(self.cep))
-    #     print(response.__dict__)
-    #     if response.status_code == 200 and 'erro' not in response.json():
-    #         self.address_street = response.json()['logradouro']
-    #         self.address_district = response.json()['bairro']
-

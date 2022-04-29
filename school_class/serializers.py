@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory
+from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade
 from student.serializers import StudentSerializer
 
 class SchoolClassSerializer(serializers.ModelSerializer):
@@ -9,7 +9,16 @@ class SchoolClassSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class StudentSubjectAverageGradeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = StudentSubjectAverageGrade
+        fields = '__all__'
+
+
 class StudentSubjectSerializer(serializers.ModelSerializer):
+    average_grade = StudentSubjectAverageGradeSerializer(source="studentsubjectaveragegrade_set", many=True, read_only=True)
+
     class Meta:
         model = StudentSubject
         fields = '__all__'
@@ -31,7 +40,6 @@ class ClassSubjectHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassSubjectHistory
         fields = '__all__'
-
 
 
 

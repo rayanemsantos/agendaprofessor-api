@@ -80,6 +80,10 @@ class ClassSubject(models.Model):
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
 
+
+    def __str__(self):
+        return self.school_class.__str__() + " " + self.subject + " " + self.teacher.__str__()
+
     def save(self, *args, **kwargs):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
@@ -163,8 +167,8 @@ class StudentSubjectAverageGrade(models.Model):
     '''
     Classe que representa as médias de uma determinada matéria de um aluno
     '''
-    student_subject = models.ForeignKey(StudentSubject, verbose_name=_("matéria do aluno"),
-                                      on_delete=models.CASCADE, null=True, blank=True),
+    student_subject = models.ForeignKey(StudentSubject, verbose_name=_("matéria aluno"),
+                                        on_delete=models.CASCADE, null=True, blank=True)
     average_grade = models.DecimalField(_("nota média"), max_digits=10, decimal_places=1)
     period = models.CharField(_("período"), max_length=255, choices=GRADE_PERIOD_CHOICES)         
     creation_datetime = models.DateTimeField(editable=False)
