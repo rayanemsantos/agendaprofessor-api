@@ -9,6 +9,11 @@ from school_work import urls as school_work_urls
 from general import urls as general_urls
 from school_staff import urls as school_staff_urls
 
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 router = routers.DefaultRouter()
 
 routeLists = [
@@ -28,4 +33,7 @@ for routeList in routeLists:
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/general/',  include(general_urls.general_urlpatterns)),
 ]

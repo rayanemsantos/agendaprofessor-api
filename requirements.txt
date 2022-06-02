@@ -3,6 +3,7 @@ Django==3.2.7
 django-filter==2.4.0
 django-localflavor==3.1
 djangorestframework==3.12.4
+djangorestframework-simplejwt
 Markdown==3.3.4
 Pillow
 python-stdnum==1.16

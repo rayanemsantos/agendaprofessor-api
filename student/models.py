@@ -1,20 +1,14 @@
-import requests
+import uuid
 import random
 from django.db import models
 from django.utils.translation import gettext as _
 from django.utils import timezone
 
-from general.models import Address
-
-def random_string():
-    return str(random.randrange(100000, 999990))
-
 class Student(models.Model):
 
     full_name = models.CharField(_("nome completo"), max_length=255, null=True, blank=True) 
-    registration_id = models.PositiveIntegerField(_("matrícula"), null=True, blank=True, default=random_string, unique=True) 
-    
-    responsible_name = models.CharField(_("nome do responsável"), max_length=255, null=True, blank=True) 
+    registration_id = models.UUIDField(_("matrícula"), default=uuid.uuid4, editable=False)
+
     responsible_contact = models.CharField(_("contato do responsável"), max_length=255, null=True, blank=True) 
     
     address_street = models.CharField(_("rua"), max_length=255, null=True, blank=True)
@@ -32,3 +26,4 @@ class Student(models.Model):
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
         return super(Student, self).save(*args, **kwargs)
+

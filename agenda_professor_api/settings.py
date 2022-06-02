@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'teacher',
     'general',
     'school_staff',
-    'django_extensions'
+    'django_extensions',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -91,7 +92,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'agenda_professor_db',
         'USER': 'postgres',
-        # 'PASSWORD': 'sumadev',
+        'PASSWORD': '1234',
         'HOST': 'localhost',
         'PORT': '5432'
     }
@@ -151,3 +152,9 @@ GRAPH_MODELS = {
 }
 
 django_heroku.settings(locals())
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}

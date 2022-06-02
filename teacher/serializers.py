@@ -11,5 +11,5 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        response['user'] = '' if instance.user == "" or instance.user == None else UserSerializer(instance.user).data
+        # response['user'] = '' if instance.user == "" or instance.user == None else UserSerializer(instance.user).data
         return response

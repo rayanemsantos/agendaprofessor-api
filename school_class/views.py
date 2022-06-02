@@ -2,18 +2,19 @@ from re import sub
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade
 from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, StudentSubjectAverageGradeSerializer
 
 from teacher.models import Teacher
 from student.models import Student
-from school_work.models import SchoolWork
 
 class SchoolClassViewSet(viewsets.ModelViewSet):
     queryset = SchoolClass.objects.all().order_by('-id')
     serializer_class = SchoolClassSerializer
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    permission_classes = (IsAuthenticated,)
 
     @action(methods=['POST'], url_path='subject/add', url_name='subject/add', detail=True)
     def add_subject(self, request, pk):
@@ -58,7 +59,7 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
     queryset = ClassSubject.objects.all().order_by('-id')
     serializer_class = ClassSubjectSerializer
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']    
-
+    permission_classes = (IsAuthenticated,)
 
     @action(methods=['POST'], url_path='student/add', url_name='student/add', detail=True)
     def add_student(self, request, pk):
