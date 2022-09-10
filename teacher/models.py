@@ -1,14 +1,16 @@
-import uuid
+import datetime
+import random
 from django.db import models
 from django.utils.translation import gettext as _
 from django.utils import timezone
 
-# from base_auth.models import AuthUser
-
 class Teacher(models.Model):
-
+    '''
+    Classe que representa um professor
+    '''
     full_name = models.CharField(_("nome completo"), max_length=255, null=True, blank=True) 
-    registration_id = models.UUIDField(_("matrícula"), default=uuid.uuid4, editable=False)
+    registration_id = models.CharField(_("código de matrícula"), max_length=7, editable=False)
+    
     formacao = models.CharField(_("formação"), max_length=255, null=True, blank=True) 
 
     address_street = models.CharField(_("rua"), max_length=255, null=True, blank=True)
@@ -22,7 +24,19 @@ class Teacher(models.Model):
         return self.full_name
 
     def save(self, *args, **kwargs):
+        if not self.registration_id:
+            code = self.set_registrationid()
+            self.registration_id = code
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
         self.edition_datetime = timezone.now()
         return super(Teacher, self).save(*args, **kwargs)
+
+    def set_registrationid(self):
+        while 1:
+            now = datetime.datetime.now()
+            code = str(random.randrange(100, 999)) + str(now.year)[:4]
+            try:
+                Teacher.objects.get(registration_id=code)
+            except:
+                return code

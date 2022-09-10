@@ -1,7 +1,15 @@
 from django.contrib import admin
-from .models import StudentSubject, StudentSubjectAverageGrade, ClassSubject, ClassSubjectHistory, ClassSubjectHistoryPresence
+from .models import SchoolClass, StudentSubject, StudentSubjectAverageGrade, ClassSubject, ClassSubjectHistory, ClassSubjectHistoryPresence
 from django.utils.safestring import mark_safe
 from django.urls import reverse
+
+class ClassSubjectInlineAdmin(admin.StackedInline):
+    model = ClassSubject
+    extra = 0
+
+class SchoolClassAdmin(admin.ModelAdmin):
+    model = SchoolClass
+    inlines = (ClassSubjectInlineAdmin, )
 
 class StudentSubjectAverageGradeInlineAdmin(admin.StackedInline):
     model = StudentSubjectAverageGrade
@@ -37,6 +45,6 @@ class ClassSubjectHistoryAdmin(admin.ModelAdmin):
     model = ClassSubjectHistory
     inlines = (ClassSubjectHistoryInlineAdmin, )
 
-
+admin.site.register(SchoolClass, SchoolClassAdmin)
 admin.site.register(StudentSubject, StudentSubjectAdmin)
 admin.site.register(ClassSubject, ClassSubjectHistoryAdmin)

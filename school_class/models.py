@@ -1,6 +1,9 @@
+import datetime
 from django.db import models
 from django.utils.translation import gettext as _
 from django.utils import timezone
+from django.dispatch import receiver
+from django.db.models.signals import post_save, post_delete, pre_save
 
 from teacher.models import Teacher
 from student.models import Student
@@ -58,15 +61,27 @@ class SchoolClass(models.Model):
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(_("última atualização"), null=True, blank=True)
 
+    class Meta:
+        unique_together = ('serie', 'identification', 'shift', )
+
     def __str__(self):
         return self.serie + " " + self.shift
 
     def save(self, *args, **kwargs):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
+            self.ano = datetime.datetime.now().year
         self.edition_datetime = timezone.now()
         return super(SchoolClass, self).save(*args, **kwargs)
 
+@receiver(post_save, sender=SchoolClass)
+def on_post_save_schoolclass(sender, instance=None, **kwargs):
+    if not instance.classsubject_set.exists():
+        for item in SUBJECT_CHOICES:
+            instance.classsubject_set.create(
+                subject=item[0],
+                school_class=instance
+            )
 
 class ClassSubject(models.Model):
     '''

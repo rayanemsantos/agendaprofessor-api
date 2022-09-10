@@ -8,7 +8,6 @@ SCHOOL_WORK_CHOICES = [
     ("ATIVIDADE", "ATIVIDADE"),
 ]
 
-
 class SchoolWork(models.Model):
     '''
     Classe que representa uma atividade de uma matéria
