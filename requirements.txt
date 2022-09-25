@@ -15,3 +15,4 @@ django-cors-headers
 psycopg2
 gunicorn
 django_heroku
+drf_yasg
