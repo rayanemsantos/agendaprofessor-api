@@ -2,6 +2,7 @@ db.sqlite3
 backups/
 backups/
 */__pycache__/
+**/__pycache__
 *.pyc
 *.kate-swp
 .idea/
