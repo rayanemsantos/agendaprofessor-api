@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'school_staff',
     'django_extensions',
     'rest_framework_simplejwt',
-    'drf_yasg'
+    'drf_yasg',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
