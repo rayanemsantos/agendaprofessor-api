@@ -18,6 +18,9 @@ class SchoolClassViewSet(viewsets.ModelViewSet):
     filter_fields = ('serie', 'identification', 'shift', 'ano')
     permission_classes = (IsAuthenticated,)
 
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
     @action(methods=['POST'], url_path='subject/add', url_name='subject/add', detail=True)
     def add_subject(self, request, pk):
         school_class = SchoolClass.objects.get(pk=pk)
