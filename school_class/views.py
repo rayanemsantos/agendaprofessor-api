@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade
 from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, StudentSubjectAverageGradeSerializer
 
@@ -14,6 +14,8 @@ class SchoolClassViewSet(viewsets.ModelViewSet):
     queryset = SchoolClass.objects.all().order_by('-id')
     serializer_class = SchoolClassSerializer
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('serie', 'identification', 'shift', 'ano')
     permission_classes = (IsAuthenticated,)
 
     @action(methods=['POST'], url_path='subject/add', url_name='subject/add', detail=True)
