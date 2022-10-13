@@ -7,10 +7,19 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ('id', 'password', ) 
+        exclude = ('id', 'password', )
 
 
 class BaseUserSerializer(serializers.Serializer):
+
+    class Meta:
+        model = BaseUser
+        fields = '__all__'
+
+
+class SwaggerPasswordChange(serializers.Serializer):
+    password = serializers.CharField()
+    current_passord = serializers.CharField()
 
     class Meta:
         model = BaseUser
