@@ -115,6 +115,10 @@ class ClassSubject(models.Model):
         self.edition_datetime = timezone.now()
         return super(ClassSubject, self).save(*args, **kwargs)
 
+    @property
+    def label(self):
+        return self.subject + " " + self.school_class.label
+
 
 class ClassSubjectSchedule(models.Model):
     '''

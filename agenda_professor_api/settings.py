@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 import django_heroku
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,7 +29,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
-
+CORS_ALLOW_CREDENTIALS = False
+CORS_ORIGIN_WHITELIST = ('http://localhost:19002',
+                         'https://agenda-professor-api.herokuapp.com', )
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -151,9 +165,13 @@ STATICFILES_DIRS = (
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# GRAPH_MODELS = {
+#     'all_applications': True,
+#     'group_models': True,
+# }
+
 GRAPH_MODELS = {
-    'all_applications': True,
-    'group_models': True,
+    'app_labels': ["school_class", "teacher", "student"],
 }
 
 django_heroku.settings(locals())
@@ -178,4 +196,6 @@ SWAGGER_SETTINGS = {
     }
 }
 
-ACCESS_TOKEN_LIFETIME = 7
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
+}

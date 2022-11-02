@@ -1,4 +1,5 @@
 from re import sub
+from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,9 +7,10 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade
 from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, StudentSubjectAverageGradeSerializer
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from teacher.models import Teacher
 from student.models import Student
+from rest_framework.authentication import BasicAuthentication, get_authorization_header
 
 
 class SchoolClassViewSet(viewsets.ModelViewSet):
@@ -72,11 +74,10 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
     queryset = ClassSubject.objects.all().order_by('-id')
     serializer_class = ClassSubjectSerializer
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (JWTAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = ClassSubject.objects.all()
-
         if request.user.teacher:
             queryset = queryset.filter(teacher=request.user.teacher)
 
@@ -156,3 +157,28 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
             return Response(serializer_subject.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClassSubjectHistoryViewSet(viewsets.ModelViewSet):
+    queryset = ClassSubjectHistory.objects.all().order_by('-id')
+    serializer_class = ClassSubjectHistorySerializer
+    http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('class_subject', )
+    permission_classes = [IsAuthenticated, ]
+    authentication_classes = (JWTAuthentication,)
+
+    def create(self, request, *args, **kwargs):
+        class_subject = request.data['class_subject']
+        print('class_subject', class_subject)
+        today = datetime.today()
+        already_registered_for_the_day = ClassSubjectHistory.objects.filter(
+            class_subject=class_subject).exists()
+        if already_registered_for_the_day:
+            return Response({'message': 'Aula do dia já foi registrada'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

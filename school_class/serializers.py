@@ -49,6 +49,7 @@ class ClassSubjectSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         response['school_class'] = '' if instance.school_class == "" or instance.school_class == None else SchoolClassSerializer(
             instance.school_class).data
+        response['label'] = instance.label
         return response
 
 
