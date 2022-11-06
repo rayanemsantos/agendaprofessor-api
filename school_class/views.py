@@ -1,16 +1,14 @@
-from re import sub
 from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade
-from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, StudentSubjectAverageGradeSerializer
+from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, ClassSubjectHistoryPresence
+from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, ClassSubjectHistoryPresenceSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from teacher.models import Teacher
 from student.models import Student
-from rest_framework.authentication import BasicAuthentication, get_authorization_header
 
 
 class SchoolClassViewSet(viewsets.ModelViewSet):
@@ -19,7 +17,8 @@ class SchoolClassViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ('serie', 'identification', 'shift', 'ano')
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated, ]
+    authentication_classes = (JWTAuthentication,)
 
     def list(self, request, *args, **kwargs):
         queryset = SchoolClass.objects.all()
@@ -74,6 +73,7 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
     queryset = ClassSubject.objects.all().order_by('-id')
     serializer_class = ClassSubjectSerializer
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    permission_classes = [IsAuthenticated, ]
     authentication_classes = (JWTAuthentication,)
 
     def list(self, request, *args, **kwargs):
@@ -112,52 +112,6 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
             print(e)
             return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['POST'], url_path='history/add', url_name='history/add', detail=True)
-    def add_history(self, request, pk):
-        class_subject = ClassSubject.objects.get(pk=pk)
-        try:
-            comment = request.data['comment']
-            content = request.data['content']
-            list_presence = request.data['list_presence']
-            subject_history, _ = ClassSubjectHistory.objects.get_or_create(
-                class_subject=class_subject,
-                content=content,
-                comment=comment
-            )
-            if isinstance(list_presence, list):
-                for _pr in list_presence:
-                    subject_history.classsubjecthistorypresence_set.create(
-                        student_id=_pr['student'],
-                        presence=_pr['presence'],
-                    )
-            serializer_subject = ClassSubjectHistorySerializer(subject_history)
-            return Response(serializer_subject.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['PUT'], url_path='history/update', url_name='history/update', detail=True)
-    def update_history(self, request, pk):
-        class_subject = ClassSubject.objects.get(pk=pk)
-        try:
-            comment = request.data['comment']
-            content = request.data['content']
-            list_presence = request.data['list_presence']
-
-            subject_history, _ = class_subject.classsubjecthistory_set.first().update(
-                content=content,
-                comment=comment
-            )
-            if isinstance(list_presence, list):
-                for _pr in list_presence:
-                    subject_history.classsubjecthistorypresence_set.update(
-                        student_id=_pr['student'],
-                        presence=_pr['presence'],
-                    )
-            serializer_subject = ClassSubjectHistorySerializer(subject_history)
-            return Response(serializer_subject.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ClassSubjectHistoryViewSet(viewsets.ModelViewSet):
     queryset = ClassSubjectHistory.objects.all().order_by('-id')
@@ -170,15 +124,72 @@ class ClassSubjectHistoryViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         class_subject = request.data['class_subject']
-        print('class_subject', class_subject)
-        today = datetime.today()
+        register_date = request.data['register_date']
+
+        if not register_date:
+            register_date = datetime.today()
+        else:
+            register_date = datetime.strptime(register_date, "%Y-%m-%d")
+
         already_registered_for_the_day = ClassSubjectHistory.objects.filter(
-            class_subject=class_subject).exists()
+            class_subject=class_subject,
+            creation_datetime__date=register_date
+        ).exists()
+
         if already_registered_for_the_day:
-            return Response({'message': 'Aula do dia já foi registrada'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Aula já foi registrada'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ClassSubjectHistoryPresenceViewSet(viewsets.ModelViewSet):
+    queryset = ClassSubjectHistoryPresence.objects.all().order_by('-id')
+    serializer_class = ClassSubjectHistoryPresenceSerializer
+    http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    permission_classes = [IsAuthenticated, ]
+    authentication_classes = (JWTAuthentication,)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            class_subject = request.data['class_subject']
+            register_date = request.data['register_date']
+            list_presence = request.data['list_presence']
+
+            try:
+                class_subject = ClassSubject.objects.get(pk=class_subject)
+            except ClassSubject.DoesNotExist as e:
+                raise ValueError(e)
+
+            if not isinstance(list_presence, list):
+                raise TypeError
+
+            if not register_date:
+                register_date = datetime.today()
+            else:
+                register_date = datetime.strptime(register_date, "%Y-%m-%d")
+
+            class_subject_history, created = ClassSubjectHistory.objects.get_or_create(
+                creation_datetime__date=register_date,
+                class_subject=class_subject,
+                defaults={
+                    'content': 'Aula do dia {}'.format(register_date.strftime("%d/%m")),
+                    'creation_datetime': register_date
+                }
+            )
+
+            for _pr in list_presence:
+                class_subject_history.classsubjecthistorypresence_set.update_or_create(
+                    student_id=_pr['student'],
+                    defaults={
+                        'presence': _pr['presence']
+                    }
+                )
+            serializer = self.get_serializer(
+                class_subject_history.classsubjecthistorypresence_set.all(), many=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)

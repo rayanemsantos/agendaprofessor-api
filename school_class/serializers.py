@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade
+from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, StudentSubjectAverageGrade, ClassSubjectHistoryPresence
 from student.serializers import StudentSerializer
 
 
@@ -57,4 +57,11 @@ class ClassSubjectHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassSubjectHistory
+        fields = '__all__'
+
+
+class ClassSubjectHistoryPresenceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ClassSubjectHistoryPresence
         fields = '__all__'
