@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Student
 
+
 class StudentSerializer(serializers.ModelSerializer):
     school_class = serializers.SerializerMethodField()
 
@@ -17,3 +18,8 @@ class StudentSerializer(serializers.ModelSerializer):
             return obj.studentsubject_set.first().class_subject.school_class.__str__()
         except:
             return 'Sem turma'
+
+    def to_representation(self, instance):
+        response = super().to_representation(instance)
+        response['name'] = '' if instance.user == "" or instance.user == None else instance.user.first_name
+        return response

@@ -10,12 +10,13 @@ from teacher.models import Teacher
 from .models import CalendarEvent
 from .serializers import CalendarEventSerializer
 
+
 class CalendarEventViewSet(viewsets.ModelViewSet):
-    queryset = CalendarEvent.objects.all().order_by('-id')
+    queryset = CalendarEvent.objects.all().order_by('date_schedule')
     serializer_class = CalendarEventSerializer
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
     permission_classes = (IsAuthenticated,)
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
@@ -37,7 +38,8 @@ class CalendarEventViewSet(viewsets.ModelViewSet):
             self.perform_destroy(instance)
         except Http404:
             pass
-        return Response(status=status.HTTP_204_NO_CONTENT)  
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class DashboardCountViewSet(APIView):
     http_method_names = ['get']
