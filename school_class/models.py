@@ -31,13 +31,14 @@ SUBJECT_CHOICES = [
     ("Artes", "Artes"),
     ("Educação física", "Educação física"),
     ("Redação", "Redação"),
+    ("Religião", "Religião"),
 ]
 
 GRADE_PERIOD_CHOICES = [
-    ("Bimestral", "Bimestral"),
-    ("Trimestral", "Trimestral"),
-    ("Semestral", "Semestral"),
-    ("Anual", "Anual"),
+    ("1 Bimestre", "1 Bimestre"),
+    ("2 Bimestre", "2 Bimestre"),
+    ("3 Bimestre", "3 Bimestre"),
+    ("4 Bimestre", "4 Bimestre"),
 ]
 
 WEEKS_CHOICES = [
@@ -68,7 +69,7 @@ class SchoolClass(models.Model):
         unique_together = ('serie', 'identification', 'shift', )
 
     def __str__(self):
-        return self.serie + " " + self.shift
+        return "{} ano {} | {}".format(self.serie, self.identification, self.shift)
 
     def save(self, *args, **kwargs):
         if not self.creation_datetime:
@@ -82,14 +83,19 @@ class SchoolClass(models.Model):
         return self.serie + " " + self.identification + " | " + self.shift
 
 
-@receiver(post_save, sender=SchoolClass)
-def on_post_save_schoolclass(sender, instance=None, **kwargs):
-    if not instance.classsubject_set.exists():
-        for item in SUBJECT_CHOICES:
-            instance.classsubject_set.create(
-                subject=item[0],
-                school_class=instance
-            )
+# @receiver(post_save, sender=SchoolClass)
+# def on_post_save_schoolclass(sender, instance=None, **kwargs):
+#     materias = ["Português", "Matemática", "História", "Geografia", "Ciências", "Literatura", "Inglês", "Religião", "Educação física"]
+
+#     if not instance.classsubject_set.exists():
+#         for materia in materias:
+#             teacher = Teacher.objects.filter(formacao=materia)
+#             if teacher.exists():
+#                 instance.classsubject_set.create(
+#                     subject=materia,
+#                     school_class=instance,
+#                     teacher=teacher.first()
+#                 )
 
 
 class ClassSubject(models.Model):
@@ -118,6 +124,19 @@ class ClassSubject(models.Model):
     @property
     def label(self):
         return self.subject + " " + self.school_class.label
+
+
+@receiver(post_save, sender=ClassSubject)
+def on_post_save_classsubject(sender, instance=None, **kwargs):
+    for item in Student.objects.filter(
+        serie=instance.school_class.serie,
+        identification=instance.school_class.identification,
+        shift=instance.school_class.shift,
+    ):
+        instance.studentsubject_set.get_or_create(
+            class_subject=instance,
+            student=item,
+        )
 
 
 class ClassSubjectSchedule(models.Model):
@@ -150,9 +169,13 @@ class ClassSubjectHistory(models.Model):
     comment = models.TextField(_("comentário"), null=True, blank=True)
     class_subject = models.ForeignKey(ClassSubject, verbose_name=_("matéria da turma"),
                                       on_delete=models.CASCADE, null=True, blank=True)
+    register_datetime = models.DateTimeField(_("Data de registro"), null=True, blank=True)
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(
         _("última atualização"), null=True, blank=True)
+
+    def __str__(self):
+        return "{} dia {}".format(self.class_subject, self.creation_datetime.strftime("%d/%m"))
 
     def save(self, *args, **kwargs):
         if not self.creation_datetime:
@@ -170,6 +193,7 @@ class ClassSubjectHistoryPresence(models.Model):
     student = models.ForeignKey(Student, verbose_name=_("aluno"),
                                 on_delete=models.CASCADE, null=True, blank=True)
     presence = models.BooleanField(_("presente"))
+    register_datetime = models.DateTimeField(_("Data de registro"), null=True, blank=True)
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(
         _("última atualização"), null=True, blank=True)
@@ -192,6 +216,9 @@ class StudentSubject(models.Model):
     creation_datetime = models.DateTimeField(editable=False)
     edition_datetime = models.DateTimeField(
         _("última atualização"), null=True, blank=True)
+
+    def __str__(self):
+        return self.class_subject.school_class.__str__() + " " + self.class_subject.subject
 
     def save(self, *args, **kwargs):
         if not self.creation_datetime:

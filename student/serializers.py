@@ -21,5 +21,5 @@ class StudentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        response['name'] = '' if instance.user == "" or instance.user == None else instance.user.first_name
+        response['full_name'] = instance.full_name
         return response

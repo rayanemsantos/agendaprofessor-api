@@ -10,7 +10,7 @@ class Teacher(BaseUser):
     Classe que representa um professor
     '''
     registration_id = models.CharField(_("código de matrícula"), max_length=7, editable=False)
-    
+
     formacao = models.CharField(_("formação"), max_length=255, null=True, blank=True) 
 
     address_street = models.CharField(_("rua"), max_length=255, null=True, blank=True)

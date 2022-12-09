@@ -6,11 +6,12 @@ from localflavor.br.models import BRCPFField
 
 UserModel = get_user_model()
 
+
 class BaseUser(models.Model):
     '''
     Classe abstrata para dados de usuário
     '''
-    user = models.OneToOneField(UserModel, on_delete=models.CASCADE)
+    user = models.OneToOneField(UserModel, on_delete=models.CASCADE, null=True)
     cpf = BRCPFField(_("CPF"), unique=True, db_index=True)
     birth_date = models.DateField(_("data de nascimento"), blank=True, null=True)
     avatar = models.ImageField(_("avatar"), upload_to='avatar/', blank=True, null=True)
@@ -19,10 +20,10 @@ class BaseUser(models.Model):
 
     class Meta:
         abstract = True
-    
+
     def __str__(self):
         return str(self.user.get_full_name())
-    
+
     def save(self, *args, **kwargs):
         if not self.creation_datetime:
             self.creation_datetime = timezone.now()
@@ -31,16 +32,16 @@ class BaseUser(models.Model):
 
     @property
     def full_name(self):
-        return self.user.get_full_name()
+        return self.user.get_full_name() if self.user else ""
 
     @property
     def email(self):
-        return self.user.email
+        return self.user.email if self.user else ""
 
     @property
     def first_name(self):
-        return self.user.first_name
+        return self.user.first_name if self.user else ""
 
     @property
     def last_name(self):
-        return self.user.last_name        
+        return self.user.last_name if self.user else ""

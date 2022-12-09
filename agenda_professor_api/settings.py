@@ -30,8 +30,8 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = False
-CORS_ORIGIN_WHITELIST = ('http://localhost:19002',
-                         'https://agenda-professor-api.herokuapp.com', )
+CORS_ORIGIN_WHITELIST = ('http://10.50.106.169', )
+
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

@@ -4,8 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, ClassSubjectHistoryPresence
-from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, ClassSubjectHistoryPresenceSerializer
+from .models import SchoolClass, ClassSubject, StudentSubject, ClassSubjectHistory, ClassSubjectHistoryPresence, StudentSubjectAverageGrade
+from .serializers import SchoolClassSerializer, ClassSubjectSerializer, ClassSubjectHistorySerializer, ClassSubjectHistoryPresenceSerializer, StudentSubjectAverageGradeSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from teacher.models import Teacher
 from student.models import Student
@@ -77,9 +77,12 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
     authentication_classes = (JWTAuthentication,)
 
     def list(self, request, *args, **kwargs):
+        from django.db.models import Count
         queryset = ClassSubject.objects.all()
         if request.user.teacher:
-            queryset = queryset.filter(teacher=request.user.teacher)
+            queryset = queryset.annotate(
+                studentsubject_count=Count('studentsubject')
+            ).filter(teacher=request.user.teacher, studentsubject_count__gt=0)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -133,12 +136,13 @@ class ClassSubjectHistoryViewSet(viewsets.ModelViewSet):
 
         already_registered_for_the_day = ClassSubjectHistory.objects.filter(
             class_subject=class_subject,
-            creation_datetime__date=register_date
+            register_datetime__date=register_date
         ).exists()
 
         if already_registered_for_the_day:
             return Response({'message': 'Aula já foi registrada'}, status=status.HTTP_400_BAD_REQUEST)
 
+        request.data['register_datetime'] = register_date
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -152,6 +156,17 @@ class ClassSubjectHistoryPresenceViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'put', 'delete']
     permission_classes = [IsAuthenticated, ]
     authentication_classes = (JWTAuthentication,)
+
+    def list(self, request, *args, **kwargs):
+        class_subject = request.GET.get('class_subject')
+        register_date = request.GET.get('register_date')
+
+        queryset = ClassSubjectHistoryPresence.objects.filter(
+            class_subject_history__class_subject=class_subject,
+            creation_datetime__date=register_date
+        )
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         try:
@@ -192,4 +207,44 @@ class ClassSubjectHistoryPresenceViewSet(viewsets.ModelViewSet):
                 class_subject_history.classsubjecthistorypresence_set.all(), many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
+            return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentSubjectAverageGradeViewSet(viewsets.ModelViewSet):
+    queryset = StudentSubjectAverageGrade.objects.all().order_by('-id')
+    serializer_class = StudentSubjectAverageGradeSerializer
+    http_method_names = ['get', 'post', 'patch', 'put', 'delete']
+    permission_classes = [IsAuthenticated, ]
+    authentication_classes = (JWTAuthentication,)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            class_subject = request.data['class_subject']
+            period = request.data['period']
+            list_grade = request.data['list_grade']
+
+            try:
+                class_subject = ClassSubject.objects.get(pk=class_subject)
+            except ClassSubject.DoesNotExist as e:
+                raise ValueError(e)
+
+            if not isinstance(list_grade, list):
+                raise TypeError
+
+            for _pg in list_grade:
+                try:
+                    student_subject = StudentSubject.objects.get(class_subject=class_subject, student_id=_pg['student'])
+                except ClassSubject.DoesNotExist as e:
+                    raise ValueError(e)
+
+                student_subject.studentsubjectaveragegrade_set.update_or_create(
+                    period=period,
+                    defaults={
+                        'average_grade': _pg['grade']
+                    }
+                )
+            serializer = self.get_serializer(student_subject.studentsubjectaveragegrade_set.all(), many=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(e)
             return Response({'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST)

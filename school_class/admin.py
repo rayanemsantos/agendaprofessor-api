@@ -47,14 +47,23 @@ class ClassSubjectHistoryInlineAdmin(admin.StackedInline):
 class StudentSubjectAdmin(admin.ModelAdmin):
     model = StudentSubject
     inlines = (StudentSubjectAverageGradeInlineAdmin, )
+    list_filter = ('student', 'class_subject', )
 
 
 class ClassSubjectHistoryAdmin(admin.ModelAdmin):
     model = ClassSubjectHistory
     inlines = (ClassSubjectHistoryInlineAdmin, )
+    list_filter = ('teacher', 'subject',)
+
+
+class ClassSubjectHistoryPresenceAdmin(admin.ModelAdmin):
+    model = ClassSubjectHistoryPresence
+    list_display = ('student', 'class_subject_history', 'presence', )
+    list_filter = ('class_subject_history', )
 
 
 admin.site.register(SchoolClass, SchoolClassAdmin)
 admin.site.register(StudentSubject, StudentSubjectAdmin)
 admin.site.register(ClassSubject, ClassSubjectHistoryAdmin)
-admin.site.register(ClassSubjectHistoryPresence)
+admin.site.register(ClassSubjectHistoryPresence, ClassSubjectHistoryPresenceAdmin)
+admin.site.register(StudentSubjectAverageGrade)
